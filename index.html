@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Potato Pomodoro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="phase-study">
+  <div class="app-frame">
+    <div class="sparkle sparkle-a" aria-hidden="true">✦</div>
+    <div class="sparkle sparkle-b" aria-hidden="true">✧</div>
+    <header class="top-bar">
+      <h1 class="logo">🥔 Potato Pomodoro</h1>
+      <nav class="top-nav">
+        <button type="button" class="icon-btn" id="btn-history" aria-label="History" title="History">📋</button>
+        <button type="button" class="icon-btn" id="btn-settings" aria-label="Settings" title="Settings">⚙️</button>
+      </nav>
+    </header>
+
+    <main class="timer-panel">
+      <div class="hero-stack">
+        <div class="potato-stage" id="potato-stage" aria-hidden="true">
+          <img
+            id="potato-image"
+            class="potato-img potato-animate-bob"
+            src="assets/images/potato-study-transparent.png"
+            alt=""
+            width="320"
+            height="320"
+          />
+        </div>
+
+        <div class="hero-text">
+          <p class="phase-label" id="phase-label">Study Time</p>
+          <p class="potato-saying" id="potato-saying">Potato is waiting patiently.</p>
+          <div class="timer-display" id="timer-display" aria-live="polite">25:00</div>
+        </div>
+      </div>
+
+      <div class="session-dots" id="session-dots" aria-label="Completed study sessions"></div>
+      <p class="daily-cheer" id="daily-cheer" hidden></p>
+
+      <div class="controls">
+        <button type="button" class="btn btn-primary btn-icon" id="btn-start-pause" aria-label="Start">
+          <span class="btn-emoji" aria-hidden="true">▶️</span>
+          <span class="btn-label">Start</span>
+        </button>
+        <button type="button" class="btn btn-secondary btn-icon" id="btn-stop" aria-label="Stop">
+          <span class="btn-emoji" aria-hidden="true">⏹️</span>
+          <span class="btn-label">Stop</span>
+        </button>
+        <button type="button" class="btn btn-secondary btn-icon" id="btn-skip" aria-label="Skip">
+          <span class="btn-emoji" aria-hidden="true">⏭️</span>
+          <span class="btn-label">Skip</span>
+        </button>
+      </div>
+
+      <section class="stats-bar" id="stats-bar" hidden>
+        <div class="stat" id="stat-study" hidden>
+          <span class="stat-label">Study</span>
+          <span class="stat-value" id="stat-study-value">0m</span>
+        </div>
+        <div class="stat" id="stat-break" hidden>
+          <span class="stat-label">Break</span>
+          <span class="stat-value" id="stat-break-value">0m</span>
+        </div>
+        <div class="stat" id="stat-total" hidden>
+          <span class="stat-label">Total</span>
+          <span class="stat-value" id="stat-total-value">0m</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Settings modal -->
+  <dialog class="modal" id="settings-modal">
+    <form method="dialog" class="modal-content" id="settings-form">
+      <header class="modal-header">
+        <h2>Settings</h2>
+        <button type="button" class="icon-btn modal-close" data-close="settings-modal" aria-label="Close">✕</button>
+      </header>
+
+      <div class="form-grid">
+        <label>
+          Study (minutes)
+          <input type="number" id="setting-study" min="1" max="120" value="25" required />
+        </label>
+        <label>
+          Short break (minutes)
+          <input type="number" id="setting-short-break" min="1" max="60" value="5" required />
+        </label>
+        <label>
+          Long break (minutes)
+          <input type="number" id="setting-long-break" min="1" max="60" value="15" required />
+        </label>
+        <label>
+          Long break after (study sessions)
+          <input type="number" id="setting-long-interval" min="2" max="12" value="4" required />
+        </label>
+      </div>
+
+      <fieldset class="toggle-group">
+        <legend>Timer</legend>
+        <label class="toggle-row">
+          <input type="checkbox" id="setting-auto-start" />
+          <span>Auto-start study after breaks</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="toggle-group">
+        <legend>Sounds</legend>
+        <label class="toggle-row">
+          <input type="checkbox" id="setting-sounds" checked />
+          <span>Enable sounds</span>
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="setting-tick" checked />
+          <span>Ticking during study</span>
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="setting-chime" checked />
+          <span>Chime when switching timers</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="toggle-group">
+        <legend>Show totals</legend>
+        <label class="toggle-row">
+          <input type="checkbox" id="setting-show-study" checked />
+          <span>Total study time</span>
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="setting-show-break" checked />
+          <span>Total break time</span>
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="setting-show-total" checked />
+          <span>Total overall time</span>
+        </label>
+      </fieldset>
+
+      <footer class="modal-footer">
+        <button type="submit" class="btn btn-primary">Save</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- History modal -->
+  <dialog class="modal" id="history-modal">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h2>History</h2>
+        <button type="button" class="icon-btn modal-close" data-close="history-modal" aria-label="Close">✕</button>
+      </header>
+      <ul class="history-list" id="history-list"></ul>
+      <p class="empty-state" id="history-empty">No sessions yet. Potato believes in you!</p>
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-clear-history">Clear history</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <audio id="audio-tick" src="assets/sounds/tick.wav" preload="auto"></audio>
+  <audio id="audio-chime" src="assets/sounds/chime.wav" preload="auto"></audio>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
