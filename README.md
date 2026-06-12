@@ -33,7 +33,7 @@ git init
 git add .
 git commit -m "Add Potato Pomodoro timer"
 git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/potato-pomodoro.git
+git remote add origin https://github.com/dadaaudition-star/potato-pomodoro.git
 git push -u origin main
 ```
 
