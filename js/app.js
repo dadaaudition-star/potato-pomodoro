@@ -21,7 +21,7 @@
   ];
 
   const CONFETTI_COLORS = ["#7a8b5f", "#e8a04c", "#d9b67b", "#d4846a", "#fdfbf0", "#e8efe0"];
-  const AMBIENT_EMOJIS = ["🍃", "🌿", "🌸", "🌼", "🌻", "✦", "✧", "🍀"];
+  const AMBIENT_EMOJIS = ["🍃", "🌿", "🌸", "🌼", "🌻", "✨", "⭐", "💫", "🍀"];
   const CELEBRATION_EMOJIS = ["🍃", "🌸", "🌼", "✨", "🥔", "🌿"];
 
   const PHASE_HISTORY = {
@@ -126,8 +126,7 @@
   let timerId = null;
   let ambientTimer = null;
   let timerEndsAt = null;
-  let lastDisplayedSecond = null;
-  let lastPersistAt = 0;
+  let lastTickSecond = null;
   let audioUnlocked = false;
 
   const $ = (id) => document.getElementById(id);
@@ -138,6 +137,7 @@
     phaseLabel: $("phase-label"),
     saying: $("potato-saying"),
     potatoImage: $("potato-image"),
+    potatoStage: $("potato-stage"),
     timerDisplay: $("timer-display"),
     sessionDots: $("session-dots"),
     dailyCheer: $("daily-cheer"),
@@ -206,53 +206,17 @@
     }
   }
 
-  function persist(force = false) {
-    const now = Date.now();
-    if (!force && state.isRunning && now - lastPersistAt < 3000) return;
-    lastPersistAt = now;
+  function persist() {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
         settings,
         state: {
           ...state,
-          savedAt: now,
+          savedAt: Date.now(),
         },
       })
     );
-  }
-
-  function syncTimerFromClock(options = {}) {
-    const { playStudyTick = false } = options;
-
-    if (!state.isRunning || timerEndsAt === null) return;
-
-    const remaining = Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000));
-
-    if (remaining === lastDisplayedSecond) return;
-
-    const previous = lastDisplayedSecond ?? state.secondsLeft;
-    state.secondsLeft = remaining;
-    lastDisplayedSecond = remaining;
-
-    els.timerDisplay.textContent = formatTime(remaining);
-    updateDocumentTitle();
-
-    if (
-      playStudyTick &&
-      state.phase === PHASE.STUDY &&
-      remaining > 0 &&
-      remaining < previous
-    ) {
-      playTick();
-    }
-
-    persist();
-
-    if (remaining <= 0) {
-      state.secondsLeft = 0;
-      completePhase();
-    }
   }
 
   function unlockAudio() {
@@ -326,15 +290,15 @@
   }
 
   function updatePotatoAnimation() {
-    const img = els.potatoImage;
-    img.classList.remove("potato-animate-bob", "potato-animate-wiggle", "potato-animate-nap");
+    const stage = els.potatoStage;
+    stage.classList.remove("potato-animate-bob", "potato-animate-wiggle", "potato-animate-nap");
 
     if (state.phase === PHASE.SHORT_BREAK && state.isRunning) {
-      img.classList.add("potato-animate-wiggle");
+      stage.classList.add("potato-animate-wiggle");
     } else if (state.phase === PHASE.LONG_BREAK) {
-      img.classList.add("potato-animate-nap");
+      stage.classList.add("potato-animate-nap");
     } else {
-      img.classList.add("potato-animate-bob");
+      stage.classList.add("potato-animate-bob");
     }
   }
 
@@ -599,6 +563,11 @@
     return Math.min(max, Math.max(min, n || min));
   }
 
+  function stopTickAudio() {
+    els.audioTick.pause();
+    els.audioTick.currentTime = 0;
+  }
+
   function playChime() {
     if (!settings.soundsEnabled || !settings.chimeEnabled) return;
     unlockAudio();
@@ -611,51 +580,74 @@
     if (!settings.soundsEnabled || !settings.tickEnabled) return;
     if (state.phase !== PHASE.STUDY || !state.isRunning) return;
     unlockAudio();
-    const audio = els.audioTick.cloneNode(true);
-    audio.setAttribute("playsinline", "");
-    audio.volume = 0.85;
+    const audio = els.audioTick;
+    if (!audio.paused) return;
+    audio.currentTime = 0;
     audio.play().catch(() => {});
   }
 
-  function stopTimer() {
+  function stopTimer(captureRemaining = true) {
+    if (captureRemaining && timerEndsAt !== null) {
+      state.secondsLeft = Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000));
+    }
+
     if (timerId !== null) {
-      clearTimeout(timerId);
+      clearInterval(timerId);
       timerId = null;
     }
+
     timerEndsAt = null;
-    lastDisplayedSecond = null;
+    lastTickSecond = null;
+    stopTickAudio();
   }
 
-  function timerLoop() {
+  function syncTimerFromClock() {
     if (!state.isRunning || timerEndsAt === null) return;
-    syncTimerFromClock({ playStudyTick: true });
-    if (state.isRunning && timerEndsAt !== null) {
-      timerId = window.setTimeout(timerLoop, 250);
+
+    const remaining = Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000));
+
+    if (remaining !== state.secondsLeft) {
+      const previous = state.secondsLeft;
+      state.secondsLeft = remaining;
+
+      if (
+        state.phase === PHASE.STUDY &&
+        remaining > 0 &&
+        remaining < previous &&
+        remaining !== lastTickSecond
+      ) {
+        lastTickSecond = remaining;
+        playTick();
+      }
+
+      els.timerDisplay.textContent = formatTime(state.secondsLeft);
+      updateDocumentTitle();
+      persist();
+    }
+
+    if (remaining <= 0) {
+      state.secondsLeft = 0;
+      completePhase();
     }
   }
 
   function startTimer() {
-    stopTimer();
+    stopTimer(false);
     timerEndsAt = Date.now() + state.secondsLeft * 1000;
-    lastDisplayedSecond = state.secondsLeft;
-    els.timerDisplay.textContent = formatTime(state.secondsLeft);
-    updateDocumentTitle();
-    persist(true);
+    lastTickSecond = state.secondsLeft;
 
     if (state.phase === PHASE.STUDY) {
       playTick();
+    } else {
+      stopTickAudio();
     }
 
-    timerId = window.setTimeout(timerLoop, 250);
+    timerId = window.setInterval(syncTimerFromClock, 250);
   }
 
-  function handleVisibilityReturn() {
-    if (document.visibilityState !== "visible") return;
+  function resumeTimerFromBackground() {
     if (!state.isRunning || timerEndsAt === null) return;
-    syncTimerFromClock({ playStudyTick: false });
-    if (state.isRunning && timerEndsAt !== null && timerId === null) {
-      timerId = window.setTimeout(timerLoop, 250);
-    }
+    syncTimerFromClock();
   }
 
   function logSession(phase, durationSeconds) {
@@ -747,7 +739,7 @@
     }
     updatePotatoAnimation();
     updateControls();
-    persist(true);
+    persist();
   }
 
   function stopPhase() {
@@ -756,7 +748,7 @@
     state.secondsLeft = phaseDurationSeconds(state.phase);
     els.saying.textContent = pickSaying("idle");
     render();
-    persist(true);
+    persist();
   }
 
   function skipPhase() {
@@ -862,8 +854,14 @@
 
     els.settingSounds.addEventListener("change", syncSoundToggleState);
 
-    document.addEventListener("visibilitychange", handleVisibilityReturn);
-    window.addEventListener("pageshow", handleVisibilityReturn);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        resumeTimerFromBackground();
+      }
+    });
+
+    window.addEventListener("pageshow", resumeTimerFromBackground);
+    window.addEventListener("focus", resumeTimerFromBackground);
   }
 
   function syncSoundToggleState() {
