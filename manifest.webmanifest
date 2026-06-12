@@ -1,0 +1,17 @@
+{
+  "name": "Potato Pomodoro",
+  "short_name": "Potato",
+  "description": "A cozy potato Pomodoro timer",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fdfbf0",
+  "theme_color": "#fdfbf0",
+  "icons": [
+    {
+      "src": "assets/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

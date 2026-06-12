@@ -15,6 +15,15 @@
     [PHASE.LONG_BREAK]: "Long Break",
   };
 
+  const SHORT_BREAK_POTATOES = [
+    "assets/images/potato-short-break-transparent.png",
+    "assets/images/potato-break-transparent.png",
+  ];
+
+  const CONFETTI_COLORS = ["#7a8b5f", "#e8a04c", "#d9b67b", "#d4846a", "#fdfbf0", "#e8efe0"];
+  const AMBIENT_EMOJIS = ["🍃", "🌿", "🌸", "🌼", "🌻", "✦", "✧", "🍀"];
+  const CELEBRATION_EMOJIS = ["🍃", "🌸", "🌼", "✨", "🥔", "🌿"];
+
   const PHASE_HISTORY = {
     [PHASE.STUDY]: "study",
     [PHASE.SHORT_BREAK]: "short-break",
@@ -100,6 +109,7 @@
     showBreakTotal: true,
     showOverallTotal: true,
     autoStartAfterBreaks: false,
+    ambientDecorations: true,
   };
 
   const DEFAULT_STATE = {
@@ -114,18 +124,24 @@
   let settings = { ...DEFAULT_SETTINGS };
   let state = { ...DEFAULT_STATE };
   let timerId = null;
+  let ambientTimer = null;
   let lastTickSecond = null;
+  let audioUnlocked = false;
 
   const $ = (id) => document.getElementById(id);
 
   const els = {
     body: document.body,
+    appFrame: document.querySelector(".app-frame"),
     phaseLabel: $("phase-label"),
     saying: $("potato-saying"),
     potatoImage: $("potato-image"),
     timerDisplay: $("timer-display"),
     sessionDots: $("session-dots"),
     dailyCheer: $("daily-cheer"),
+    streakBadge: $("streak-badge"),
+    confettiLayer: $("confetti-layer"),
+    ambientLayer: $("ambient-layer"),
     btnStartPause: $("btn-start-pause"),
     btnStop: $("btn-stop"),
     btnSkip: $("btn-skip"),
@@ -157,6 +173,7 @@
     settingShowBreak: $("setting-show-break"),
     settingShowTotal: $("setting-show-total"),
     settingAutoStart: $("setting-auto-start"),
+    settingAmbient: $("setting-ambient"),
   };
 
   function load() {
@@ -166,11 +183,20 @@
       const saved = JSON.parse(raw);
       if (saved.settings) settings = { ...DEFAULT_SETTINGS, ...saved.settings };
       if (saved.state) {
-        state = {
-          ...DEFAULT_STATE,
-          ...saved.state,
-          isRunning: false,
-        };
+        const loaded = { ...DEFAULT_STATE, ...saved.state };
+        state = loaded;
+
+        if (state.isRunning && loaded.savedAt) {
+          const elapsed = Math.floor((Date.now() - loaded.savedAt) / 1000);
+          state.secondsLeft = Math.max(0, state.secondsLeft - elapsed);
+          if (state.secondsLeft === 0) {
+            state.isRunning = false;
+          }
+        } else if (!state.isRunning) {
+          state.isRunning = false;
+        }
+
+        delete state.savedAt;
       }
     } catch {
       settings = { ...DEFAULT_SETTINGS };
@@ -183,9 +209,31 @@
       STORAGE_KEY,
       JSON.stringify({
         settings,
-        state: { ...state, isRunning: false },
+        state: {
+          ...state,
+          savedAt: Date.now(),
+        },
       })
     );
+  }
+
+  function unlockAudio() {
+    if (audioUnlocked) return;
+    [els.audioTick, els.audioChime].forEach((audio) => {
+      const previousVolume = audio.volume;
+      audio.volume = 0.01;
+      audio
+        .play()
+        .then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.volume = previousVolume || 1;
+        })
+        .catch(() => {
+          audio.volume = previousVolume || 1;
+        });
+    });
+    audioUnlocked = true;
   }
 
   function pickSaying(group) {
@@ -231,7 +279,7 @@
       case PHASE.STUDY:
         return "assets/images/potato-study-transparent.png";
       case PHASE.SHORT_BREAK:
-        return "assets/images/potato-short-break-transparent.png";
+        return SHORT_BREAK_POTATOES[state.completedStudySessions % SHORT_BREAK_POTATOES.length];
       case PHASE.LONG_BREAK:
         return "assets/images/potato-long-break-transparent.png";
       default:
@@ -286,6 +334,117 @@
         : `${count} potato-powered study sessions today 🥔✨`;
   }
 
+  function getStudyDaySet() {
+    return new Set(
+      state.history
+        .filter((entry) => entry.type === "study")
+        .map((entry) => new Date(entry.finishedAt).toDateString())
+    );
+  }
+
+  function computeStreak() {
+    const studyDays = getStudyDaySet();
+    if (studyDays.size === 0) return 0;
+
+    const cursor = new Date();
+    cursor.setHours(0, 0, 0, 0);
+
+    if (!studyDays.has(cursor.toDateString())) {
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    let streak = 0;
+    while (studyDays.has(cursor.toDateString())) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    return streak;
+  }
+
+  function updateStreakBadge() {
+    const streak = computeStreak();
+    if (streak === 0) {
+      els.streakBadge.hidden = true;
+      return;
+    }
+
+    els.streakBadge.hidden = false;
+    els.streakBadge.textContent =
+      streak === 1 ? "1-day potato streak 🔥" : `${streak}-day potato streak 🔥`;
+  }
+
+  function updateDocumentTitle() {
+    const time = formatTime(state.secondsLeft);
+    const running = state.isRunning ? "" : " · paused";
+    document.title = `${time}${running} · Potato Pomodoro`;
+  }
+
+  function launchConfetti() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const layer = els.confettiLayer;
+    layer.innerHTML = "";
+
+    for (let i = 0; i < 28; i += 1) {
+      const piece = document.createElement("span");
+      piece.className = "confetti-piece";
+      piece.style.left = `${Math.random() * 100}%`;
+      piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+      piece.style.animationDelay = `${Math.random() * 0.35}s`;
+      piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+      layer.appendChild(piece);
+    }
+
+    for (let i = 0; i < 14; i += 1) {
+      const piece = document.createElement("span");
+      piece.className = "confetti-piece emoji";
+      piece.textContent =
+        CELEBRATION_EMOJIS[Math.floor(Math.random() * CELEBRATION_EMOJIS.length)];
+      piece.style.left = `${Math.random() * 100}%`;
+      piece.style.animationDelay = `${Math.random() * 0.4}s`;
+      layer.appendChild(piece);
+    }
+
+    window.setTimeout(() => {
+      layer.innerHTML = "";
+    }, 2400);
+  }
+
+  function spawnAmbientParticle() {
+    if (!settings.ambientDecorations) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const piece = document.createElement("span");
+    piece.className = "ambient-particle";
+    piece.textContent = AMBIENT_EMOJIS[Math.floor(Math.random() * AMBIENT_EMOJIS.length)];
+    piece.style.left = `${8 + Math.random() * 84}%`;
+    const duration = 4 + Math.random() * 2.5;
+    piece.style.animationDuration = `${duration}s`;
+    els.ambientLayer.appendChild(piece);
+    window.setTimeout(() => piece.remove(), duration * 1000 + 100);
+  }
+
+  function syncAmbientDecorations() {
+    if (ambientTimer !== null) {
+      clearInterval(ambientTimer);
+      ambientTimer = null;
+    }
+
+    els.ambientLayer.innerHTML = "";
+
+    if (settings.ambientDecorations) {
+      els.appFrame.classList.add("decorations-on");
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        spawnAmbientParticle();
+        ambientTimer = window.setInterval(spawnAmbientParticle, 2600);
+      }
+      return;
+    }
+
+    els.appFrame.classList.remove("decorations-on");
+  }
+
   function updateSessionDots() {
     const interval = settings.longBreakInterval;
     els.sessionDots.innerHTML = "";
@@ -335,7 +494,9 @@
     updateControls();
     updateSessionDots();
     updateDailyCheer();
+    updateStreakBadge();
     updateStatsDisplay();
+    updateDocumentTitle();
     renderHistory();
   }
 
@@ -376,6 +537,7 @@
     els.settingShowBreak.checked = settings.showBreakTotal;
     els.settingShowTotal.checked = settings.showOverallTotal;
     els.settingAutoStart.checked = settings.autoStartAfterBreaks;
+    els.settingAmbient.checked = settings.ambientDecorations;
   }
 
   function readSettingsForm() {
@@ -391,6 +553,7 @@
       showBreakTotal: els.settingShowBreak.checked,
       showOverallTotal: els.settingShowTotal.checked,
       autoStartAfterBreaks: els.settingAutoStart.checked,
+      ambientDecorations: els.settingAmbient.checked,
     };
   }
 
@@ -400,6 +563,7 @@
 
   function playChime() {
     if (!settings.soundsEnabled || !settings.chimeEnabled) return;
+    unlockAudio();
     const audio = els.audioChime;
     audio.currentTime = 0;
     audio.play().catch(() => {});
@@ -408,8 +572,9 @@
   function playTick() {
     if (!settings.soundsEnabled || !settings.tickEnabled) return;
     if (state.phase !== PHASE.STUDY || !state.isRunning) return;
-    const audio = els.audioTick;
-    audio.currentTime = 0;
+    unlockAudio();
+    const audio = els.audioTick.cloneNode(true);
+    audio.volume = els.audioTick.volume;
     audio.play().catch(() => {});
   }
 
@@ -424,6 +589,7 @@
   function startTimer() {
     stopTimer();
     lastTickSecond = state.secondsLeft;
+    playTick();
     timerId = setInterval(tick, 1000);
   }
 
@@ -441,6 +607,7 @@
     }
 
     els.timerDisplay.textContent = formatTime(state.secondsLeft);
+    updateDocumentTitle();
     persist();
   }
 
@@ -484,6 +651,7 @@
     startTimer();
     updatePotatoAnimation();
     updateControls();
+    updateDocumentTitle();
     return true;
   }
 
@@ -495,6 +663,10 @@
 
     els.saying.textContent = pickSaying("complete");
     playChime();
+
+    if (completedPhase === PHASE.STUDY) {
+      launchConfetti();
+    }
 
     const next = nextPhaseAfterComplete();
     state.phase = next;
@@ -512,6 +684,7 @@
   }
 
   function startPause() {
+    unlockAudio();
     if (state.isRunning) {
       state.isRunning = false;
       stopTimer();
@@ -542,12 +715,13 @@
   function skipPhase() {
     stopTimer();
     playChime();
-    const elapsed = phaseDurationSeconds(state.phase) - state.secondsLeft;
+    const completedPhase = state.phase;
+    const elapsed = phaseDurationSeconds(completedPhase) - state.secondsLeft;
     if (elapsed > 0) {
-      logSession(state.phase, elapsed);
+      logSession(completedPhase, elapsed);
     }
 
-    if (state.phase === PHASE.STUDY) {
+    if (completedPhase === PHASE.STUDY) {
       state.completedStudySessions += 1;
       const interval = settings.longBreakInterval;
       state.phase =
@@ -562,16 +736,36 @@
     state.isRunning = false;
     els.saying.textContent = pickSaying("idle");
     render();
+
+    if (maybeAutoStartStudy(completedPhase)) {
+      persist();
+      return;
+    }
+
     persist();
   }
 
   function applySettingsAndResetIfNeeded() {
+    const previous = { ...settings };
+    const wasRunning = state.isRunning;
     readSettingsForm();
-    state.secondsLeft = phaseDurationSeconds(state.phase);
-    stopTimer();
-    state.isRunning = false;
+
+    const durationsChanged =
+      previous.studyMinutes !== settings.studyMinutes ||
+      previous.shortBreakMinutes !== settings.shortBreakMinutes ||
+      previous.longBreakMinutes !== settings.longBreakMinutes;
+
+    if (durationsChanged) {
+      state.secondsLeft = phaseDurationSeconds(state.phase);
+      stopTimer();
+      state.isRunning = false;
+    } else if (wasRunning && timerId === null) {
+      startTimer();
+    }
+
     updateStatsDisplay();
     updateSessionDots();
+    syncAmbientDecorations();
     persist();
     render();
   }
@@ -585,6 +779,7 @@
     renderHistory();
     updateSessionDots();
     updateDailyCheer();
+    updateStreakBadge();
     updateStatsDisplay();
   }
 
@@ -628,12 +823,28 @@
   }
 
   function init() {
+    const hadSavedState = Boolean(localStorage.getItem(STORAGE_KEY));
     load();
-    state.secondsLeft = phaseDurationSeconds(state.phase);
+
+    if (!hadSavedState) {
+      state.secondsLeft = phaseDurationSeconds(state.phase);
+    } else if (state.secondsLeft <= 0) {
+      state.secondsLeft = phaseDurationSeconds(state.phase);
+      state.isRunning = false;
+    }
+
     bindEvents();
     syncSoundToggleState();
+    syncAmbientDecorations();
     els.saying.textContent = pickSaying("idle");
     render();
+
+    if (state.isRunning && state.secondsLeft > 0) {
+      startTimer();
+      updateControls();
+    } else if (state.secondsLeft === 0 && state.isRunning) {
+      completePhase();
+    }
   }
 
   init();

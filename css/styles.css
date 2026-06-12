@@ -85,6 +85,8 @@ body.phase-long-break .app-frame {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .logo {
@@ -101,6 +103,7 @@ body.phase-long-break .app-frame {
   opacity: 0.45;
   font-size: 1rem;
   pointer-events: none;
+  z-index: 1;
   animation: sparkle-twinkle 4s ease-in-out infinite;
 }
 
@@ -113,6 +116,33 @@ body.phase-long-break .app-frame {
   top: 38%;
   right: 0.85rem;
   animation-delay: 1.4s;
+}
+
+.sparkle-extra {
+  display: none;
+}
+
+.decorations-on .sparkle-extra {
+  display: block;
+}
+
+.sparkle-c {
+  top: 18%;
+  left: 0.75rem;
+  animation-delay: 0.6s;
+}
+
+.sparkle-d {
+  top: 62%;
+  left: 12%;
+  animation-delay: 2.1s;
+}
+
+.sparkle-e {
+  top: 24%;
+  right: 18%;
+  font-size: 0.85rem;
+  animation-delay: 3s;
 }
 
 @keyframes sparkle-twinkle {
@@ -149,40 +179,32 @@ body.phase-long-break .app-frame {
 
 .timer-panel {
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-stack {
-  position: relative;
-  min-height: 17rem;
-  margin: 0.25rem 0 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+}
+
+.hero-top {
+  width: 100%;
 }
 
 .potato-stage {
-  position: absolute;
-  top: -0.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(340px, 108%);
-  pointer-events: none;
-  z-index: 1;
+  width: min(280px, 88%);
+  margin: 0.15rem 0;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
-}
-
-.hero-text {
-  position: relative;
-  z-index: 2;
-  padding-top: 7.5rem;
-  pointer-events: none;
-}
-
-.hero-text > * {
-  pointer-events: auto;
+  align-items: center;
 }
 
 .potato-img {
-  width: min(300px, 92vw);
+  width: min(240px, 78vw);
   height: auto;
   display: block;
   object-fit: contain;
@@ -190,11 +212,20 @@ body.phase-long-break .app-frame {
 }
 
 body.phase-short-break .potato-img {
-  width: min(310px, 94vw);
+  width: min(250px, 80vw);
 }
 
 body.phase-long-break .potato-img {
-  width: min(340px, 98vw);
+  width: min(260px, 82vw);
+}
+
+.timer-display {
+  font-size: 4rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  margin: 0.5rem 0 0.75rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .potato-animate-bob {
@@ -256,17 +287,17 @@ body.phase-long-break .potato-img {
 
 .potato-saying {
   display: inline-block;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  margin: 0 auto 0.5rem;
+  margin: 0 auto 0.15rem;
   min-height: 1.5em;
   color: var(--text);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.82);
   border: 2px dashed rgba(122, 139, 95, 0.22);
   border-radius: 18px 18px 18px 6px;
-  padding: 0.45rem 0.85rem;
+  padding: 0.4rem 0.75rem;
   transform: rotate(-1deg);
-  max-width: 92%;
+  max-width: 88%;
   box-shadow: 0 4px 14px rgba(74, 63, 53, 0.06);
 }
 
@@ -292,29 +323,12 @@ body.phase-long-break .phase-label {
   color: var(--long-break-coral);
 }
 
-.timer-display {
-  font-size: 4rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.1;
-  margin: 0.15rem 0 0;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.65);
-}
-
 .session-dots {
   display: flex;
   justify-content: center;
   gap: 0.45rem;
   min-height: 14px;
   margin: 0.85rem 0 0.35rem;
-}
-
-.daily-cheer {
-  margin: 0 0 0.85rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--text-soft);
 }
 
 .session-dots span {
@@ -326,6 +340,28 @@ body.phase-long-break .phase-label {
   transition: opacity 0.2s, transform 0.2s;
 }
 
+.daily-cheer {
+  margin: 0 0 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.streak-badge {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--potato-tan);
+}
+
+.controls {
+  display: flex;
+  gap: 0.55rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
 .session-dots span.filled {
   opacity: 1;
   transform: scale(1.15) rotate(-8deg);
@@ -334,13 +370,6 @@ body.phase-long-break .phase-label {
 
 body.phase-study .session-dots span.filled {
   background: var(--study-green);
-}
-
-.controls {
-  display: flex;
-  gap: 0.55rem;
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
 .btn {
@@ -378,27 +407,36 @@ body.phase-study .session-dots span.filled {
 }
 
 .btn-primary {
-  background: #6f6256;
-  color: white;
-  box-shadow: 0 4px 14px rgba(74, 63, 53, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  border: 2px solid rgba(74, 63, 53, 0.14);
+  box-shadow: 0 4px 12px rgba(74, 63, 53, 0.08);
   transition:
     transform 0.15s,
     box-shadow 0.15s,
-    background 0.2s;
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
 
 body.phase-study .btn-primary:hover {
   background: var(--study-green);
+  border-color: var(--study-green);
+  color: white;
   box-shadow: 0 4px 14px rgba(122, 139, 95, 0.35);
 }
 
 body.phase-short-break .btn-primary:hover {
   background: var(--break-orange);
+  border-color: var(--break-orange);
+  color: white;
   box-shadow: 0 4px 14px rgba(232, 160, 76, 0.35);
 }
 
 body.phase-long-break .btn-primary:hover {
   background: var(--long-break-coral);
+  border-color: var(--long-break-coral);
+  color: white;
   box-shadow: 0 4px 14px rgba(212, 132, 106, 0.35);
 }
 
@@ -614,11 +652,80 @@ body.phase-long-break .btn-secondary:hover {
   display: none;
 }
 
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.ambient-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.ambient-particle {
+  position: absolute;
+  top: -1.5rem;
+  font-size: 0.95rem;
+  opacity: 0;
+  animation: ambient-fall linear forwards;
+  filter: drop-shadow(0 1px 2px rgba(74, 63, 53, 0.08));
+}
+
+@keyframes ambient-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(430px) rotate(120deg);
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -8px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0.95;
+  animation: confetti-fall 2.2s ease-in forwards;
+}
+
+.confetti-piece.emoji {
+  width: auto;
+  height: auto;
+  font-size: 1rem;
+  background: none;
+  border-radius: 0;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(520px) rotate(720deg);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .potato-animate-bob,
   .potato-animate-wiggle,
   .potato-animate-nap,
-  .sparkle {
+  .sparkle,
+  .ambient-particle {
     animation: none;
   }
 }
@@ -628,20 +735,12 @@ body.phase-long-break .btn-secondary:hover {
     padding: 1.35rem 1.1rem 1.2rem;
   }
 
-  .hero-stack {
-    min-height: 15rem;
-  }
-
-  .hero-text {
-    padding-top: 6.5rem;
-  }
-
   .potato-img {
-    width: min(270px, 96vw);
+    width: min(210px, 72vw);
   }
 
   body.phase-long-break .potato-img {
-    width: min(290px, 98vw);
+    width: min(220px, 74vw);
   }
 
   .timer-display {

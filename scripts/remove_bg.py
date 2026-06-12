@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1] / "assets" / "images"
 TARGETS = [
     "potato-study.png",
     "potato-short-break.png",
+    "potato-break.png",
     "potato-long-break.png",
 ]
 

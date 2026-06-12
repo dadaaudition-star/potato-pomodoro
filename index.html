@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Potato Pomodoro</title>
+  <meta name="description" content="A cozy potato Pomodoro timer with cute sayings and streaks." />
+  <meta name="theme-color" content="#fdfbf0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Potato Pomodoro" />
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
@@ -13,6 +21,11 @@
   <div class="app-frame">
     <div class="sparkle sparkle-a" aria-hidden="true">✦</div>
     <div class="sparkle sparkle-b" aria-hidden="true">✧</div>
+    <div class="sparkle sparkle-extra sparkle-c" aria-hidden="true">✦</div>
+    <div class="sparkle sparkle-extra sparkle-d" aria-hidden="true">✧</div>
+    <div class="sparkle sparkle-extra sparkle-e" aria-hidden="true">✦</div>
+    <div class="ambient-layer" id="ambient-layer" aria-hidden="true"></div>
+    <div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
     <header class="top-bar">
       <h1 class="logo">🥔 Potato Pomodoro</h1>
       <nav class="top-nav">
@@ -23,6 +36,11 @@
 
     <main class="timer-panel">
       <div class="hero-stack">
+        <div class="hero-top">
+          <p class="phase-label" id="phase-label">Study Time</p>
+          <p class="potato-saying" id="potato-saying">Potato is waiting patiently.</p>
+        </div>
+
         <div class="potato-stage" id="potato-stage" aria-hidden="true">
           <img
             id="potato-image"
@@ -33,16 +51,13 @@
             height="320"
           />
         </div>
-
-        <div class="hero-text">
-          <p class="phase-label" id="phase-label">Study Time</p>
-          <p class="potato-saying" id="potato-saying">Potato is waiting patiently.</p>
-          <div class="timer-display" id="timer-display" aria-live="polite">25:00</div>
-        </div>
       </div>
+
+      <div class="timer-display" id="timer-display" aria-live="polite">25:00</div>
 
       <div class="session-dots" id="session-dots" aria-label="Completed study sessions"></div>
       <p class="daily-cheer" id="daily-cheer" hidden></p>
+      <p class="streak-badge" id="streak-badge" hidden></p>
 
       <div class="controls">
         <button type="button" class="btn btn-primary btn-icon" id="btn-start-pause" aria-label="Start">
@@ -104,10 +119,18 @@
       </div>
 
       <fieldset class="toggle-group">
+        <legend>Cozy vibes</legend>
+        <label class="toggle-row">
+          <input type="checkbox" id="setting-ambient" checked />
+          <span>Falling leaves, flowers &amp; sparkles</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="toggle-group">
         <legend>Timer</legend>
         <label class="toggle-row">
           <input type="checkbox" id="setting-auto-start" />
-          <span>Auto-start study after breaks</span>
+          <span>Auto-start study when a break ends</span>
         </label>
       </fieldset>
 

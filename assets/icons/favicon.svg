@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Potato Pomodoro">
+  <rect width="64" height="64" rx="14" fill="#fdfbf0"/>
+  <ellipse cx="32" cy="36" rx="18" ry="20" fill="#d9b67b"/>
+  <ellipse cx="26" cy="30" rx="2.2" ry="2.6" fill="#4a3f35" opacity="0.85"/>
+  <ellipse cx="38" cy="30" rx="2.2" ry="2.6" fill="#4a3f35" opacity="0.85"/>
+  <path d="M26 40 Q32 45 38 40" fill="none" stroke="#4a3f35" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="22" cy="36" r="3" fill="#efb8a6" opacity="0.55"/>
+  <circle cx="42" cy="36" r="3" fill="#efb8a6" opacity="0.55"/>
+  <ellipse cx="24" cy="22" rx="3" ry="2" fill="#7a8b5f" opacity="0.8"/>
+  <ellipse cx="40" cy="21" rx="3" ry="2" fill="#7a8b5f" opacity="0.8"/>
+</svg>

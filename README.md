@@ -46,6 +46,23 @@ Replace `YOUR_USERNAME` with your GitHub username. GitHub will ask you to sign i
 3. Branch: `main`, folder: `/ (root)`
 4. Save. After a minute or two, your site URL appears at the top of the Pages section.
 
+### Update the live site after you edit
+
+Whenever you change files locally, upload the new version:
+
+```powershell
+Set-Location "C:\Users\Vida Alvarez\potato-pomodoro-cursor"
+git add .
+git commit -m "Describe what you changed"
+git push
+```
+
+GitHub Pages usually updates within a minute or two after you push.
+
+## Syncing history across devices
+
+Right now history, settings, and streaks are saved in **localStorage** — that means each browser/device keeps its own copy. To sync across devices you'd need a small backend or a cloud service (Firebase, Supabase, etc.). That's a bigger step; happy to add it later if you want.
+
 ## Transparent potato images
 
 If you replace mascot PNGs, re-run:
