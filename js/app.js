@@ -125,7 +125,9 @@
   let state = { ...DEFAULT_STATE };
   let timerId = null;
   let ambientTimer = null;
-  let lastTickSecond = null;
+  let timerEndsAt = null;
+  let lastDisplayedSecond = null;
+  let lastPersistAt = 0;
   let audioUnlocked = false;
 
   const $ = (id) => document.getElementById(id);
@@ -204,17 +206,53 @@
     }
   }
 
-  function persist() {
+  function persist(force = false) {
+    const now = Date.now();
+    if (!force && state.isRunning && now - lastPersistAt < 3000) return;
+    lastPersistAt = now;
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
         settings,
         state: {
           ...state,
-          savedAt: Date.now(),
+          savedAt: now,
         },
       })
     );
+  }
+
+  function syncTimerFromClock(options = {}) {
+    const { playStudyTick = false } = options;
+
+    if (!state.isRunning || timerEndsAt === null) return;
+
+    const remaining = Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000));
+
+    if (remaining === lastDisplayedSecond) return;
+
+    const previous = lastDisplayedSecond ?? state.secondsLeft;
+    state.secondsLeft = remaining;
+    lastDisplayedSecond = remaining;
+
+    els.timerDisplay.textContent = formatTime(remaining);
+    updateDocumentTitle();
+
+    if (
+      playStudyTick &&
+      state.phase === PHASE.STUDY &&
+      remaining > 0 &&
+      remaining < previous
+    ) {
+      playTick();
+    }
+
+    persist();
+
+    if (remaining <= 0) {
+      state.secondsLeft = 0;
+      completePhase();
+    }
   }
 
   function unlockAudio() {
@@ -574,41 +612,50 @@
     if (state.phase !== PHASE.STUDY || !state.isRunning) return;
     unlockAudio();
     const audio = els.audioTick.cloneNode(true);
-    audio.volume = els.audioTick.volume;
+    audio.setAttribute("playsinline", "");
+    audio.volume = 0.85;
     audio.play().catch(() => {});
   }
 
   function stopTimer() {
     if (timerId !== null) {
-      clearInterval(timerId);
+      clearTimeout(timerId);
       timerId = null;
     }
-    lastTickSecond = null;
+    timerEndsAt = null;
+    lastDisplayedSecond = null;
+  }
+
+  function timerLoop() {
+    if (!state.isRunning || timerEndsAt === null) return;
+    syncTimerFromClock({ playStudyTick: true });
+    if (state.isRunning && timerEndsAt !== null) {
+      timerId = window.setTimeout(timerLoop, 250);
+    }
   }
 
   function startTimer() {
     stopTimer();
-    lastTickSecond = state.secondsLeft;
-    playTick();
-    timerId = setInterval(tick, 1000);
-  }
+    timerEndsAt = Date.now() + state.secondsLeft * 1000;
+    lastDisplayedSecond = state.secondsLeft;
+    els.timerDisplay.textContent = formatTime(state.secondsLeft);
+    updateDocumentTitle();
+    persist(true);
 
-  function tick() {
-    if (state.secondsLeft <= 0) {
-      completePhase();
-      return;
-    }
-
-    state.secondsLeft -= 1;
-
-    if (state.secondsLeft !== lastTickSecond) {
-      lastTickSecond = state.secondsLeft;
+    if (state.phase === PHASE.STUDY) {
       playTick();
     }
 
-    els.timerDisplay.textContent = formatTime(state.secondsLeft);
-    updateDocumentTitle();
-    persist();
+    timerId = window.setTimeout(timerLoop, 250);
+  }
+
+  function handleVisibilityReturn() {
+    if (document.visibilityState !== "visible") return;
+    if (!state.isRunning || timerEndsAt === null) return;
+    syncTimerFromClock({ playStudyTick: false });
+    if (state.isRunning && timerEndsAt !== null && timerId === null) {
+      timerId = window.setTimeout(timerLoop, 250);
+    }
   }
 
   function logSession(phase, durationSeconds) {
@@ -700,7 +747,7 @@
     }
     updatePotatoAnimation();
     updateControls();
-    persist();
+    persist(true);
   }
 
   function stopPhase() {
@@ -709,7 +756,7 @@
     state.secondsLeft = phaseDurationSeconds(state.phase);
     els.saying.textContent = pickSaying("idle");
     render();
-    persist();
+    persist(true);
   }
 
   function skipPhase() {
@@ -814,6 +861,9 @@
     });
 
     els.settingSounds.addEventListener("change", syncSoundToggleState);
+
+    document.addEventListener("visibilitychange", handleVisibilityReturn);
+    window.addEventListener("pageshow", handleVisibilityReturn);
   }
 
   function syncSoundToggleState() {
