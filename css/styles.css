@@ -790,3 +790,197 @@ body.phase-long-break .btn-secondary:hover {
     grid-template-columns: 1fr;
   }
 }
+
+.study-topic-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  margin-bottom: 0.5rem;
+}
+
+.study-topic-label input {
+  font-family: var(--font);
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.5rem 0.7rem;
+  border: 2px dashed rgba(122, 139, 95, 0.25);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text);
+}
+
+.study-topic-label input:focus {
+  outline: none;
+  border-color: var(--study-green);
+}
+
+.break-tip {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--break-orange);
+  margin: 0.25rem 0 0;
+}
+
+body.phase-long-break .break-tip {
+  color: var(--long-break-coral);
+}
+
+.timer-progress-wrap {
+  width: 100%;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.timer-progress-track {
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(74, 63, 53, 0.1);
+  overflow: hidden;
+}
+
+.timer-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--study-green);
+  transition: width 0.35s ease;
+}
+
+body.phase-short-break .timer-progress-fill {
+  background: var(--break-orange);
+}
+
+body.phase-long-break .timer-progress-fill {
+  background: var(--long-break-coral);
+}
+
+.timer-progress-label {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-soft);
+}
+
+.period-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.period-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px dashed rgba(74, 63, 53, 0.12);
+  border-radius: 14px;
+  padding: 0.45rem 0.35rem;
+}
+
+.period-label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-soft);
+}
+
+.period-value {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-top: 0.15rem;
+}
+
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.filter-btn {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 2px solid rgba(74, 63, 53, 0.12);
+  background: white;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+
+.filter-btn.active {
+  border-color: var(--study-green);
+  background: var(--study-green-light);
+}
+
+.history-summary {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  margin: 0 0 0.65rem;
+}
+
+.history-footer {
+  justify-content: space-between;
+}
+
+.journal-prompt {
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+}
+
+.journal-label input {
+  width: 100%;
+  font-family: var(--font);
+  font-size: 0.95rem;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid rgba(74, 63, 53, 0.12);
+  border-radius: 12px;
+}
+
+.achievement-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.achievement {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 14px;
+  border: 2px dashed rgba(74, 63, 53, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.achievement.locked {
+  opacity: 0.45;
+}
+
+.achievement.unlocked {
+  border-color: rgba(122, 139, 95, 0.35);
+  background: var(--study-green-light);
+}
+
+.achievement-emoji {
+  font-size: 1.5rem;
+}
+
+.achievement-text {
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 480px) {
+  .period-stats {
+    grid-template-columns: 1fr;
+  }
+}
